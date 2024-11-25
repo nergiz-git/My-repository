@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" >
+    <title>Конвертер валют онлайн</title>
+    <link rel="stylesheet" href="style.css" >
+</head>
+  <body>
+    <header class="header">
+      <div class="header-content">
+        <img src="img/image.png" alt="bank logo">
+        <nav class="nav">
+          <p>БАНК</p>
+          <p>БИЗНЕС</p>
+          <p>ИНВЕСТИЦИИ</p>
+          <p>СТРАХОВАНИЕ</p>
+          <p>МОБАЙЛ</p>
+          <p>ПУТЕШЕСТВИЯ</p>
+          <p>РАЗВЛЕЧЕНИЯ</p>
+        </nav>
+        <button>
+          ВОЙТИ
+      </button>
+      </div>
+    </header>
+
+    <div class="container">
+      <h1>Конвертер валют онлайн</h1>
+ <div class="converter-box">
+        <div class="currency-group">
+          <div class="currency-label">У меня есть</div>
+          <div class="currency-tabs">
+            <button class="currency-tab active" data-currency="RUB">RUB</button>
+            <button class="currency-tab" data-currency="USD">USD</button>
+            <button class="currency-tab" data-currency="EUR">EUR</button>
+            <button class="currency-tab" data-currency="GBP">GBP</button>
+          </div>
+          <div class="input-container">
+            <input type="text" id="amount1"  />
+            <span id="rate1" class="rate-placeholder">1 RUB = 0.0096 USD</span>
+          </div>
+        </div>
+
+        <div class="currency-group">
+          <div class="currency-label">Хочу приобрести</div>
+          <div class="currency-tabs">
+            <button class="currency-tab" data-currency="RUB">RUB</button>
+            <button class="currency-tab active" data-currency="USD">USD</button>
+            <button class="currency-tab" data-currency="EUR">EUR</button>
+            <button class="currency-tab" data-currency="GBP">GBP</button>
+          </div> 
+          <div class="input-container">
+            <input type="text" id="amount2" />
+            <span id="rate2" class="rate-placeholder">1 USD = 103.7200 RUB</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="error-message" id="offline-message">
+      Internet bağlantınız yoxdur. Zəhmət olmasa bağlantınızı yoxlayın.
+    </div>
+    
+
+<script src="script.js"></script>
+  </body>
+</html>
+
