@@ -1,235 +1,152 @@
-const amount1 = document.getElementById("amount1");
-const amount2 = document.getElementById("amount2");
+const API_URL = "https://open.er-api.com/v6/latest/";
+const API_KEY = "84fbec1168aca3156cc48dc7b38b4907"; 
+
+
+const currencyTabs1 = document.querySelectorAll(".currency-group:first-child .currency-tab");
+const currencyTabs2 = document.querySelectorAll(".currency-group:last-child .currency-tab");
+const amountInput1 = document.getElementById("amount1");
+const amountInput2 = document.getElementById("amount2");
 const rate1 = document.getElementById("rate1");
 const rate2 = document.getElementById("rate2");
-const errorMessage = document.getElementById("errorMessage");
+const offlineMessage = document.getElementById("offline-message");
+
+
 let currency1 = "RUB";
 let currency2 = "USD";
 
-function validateNumberInput(event) {
-  if (
-    event.key === "Backspace" ||
-    event.key === "Delete" ||
-    event.key === "Tab" ||
-    event.key === "Escape" ||
-    event.key === "Enter" ||
-    event.key === "." ||
-    event.key === ","
-  ) {
-    if (
-      (event.key === "." || event.key === ",") &&
-      event.target.value.includes(".")
-    ) {
-      event.preventDefault();
-    }
-    return;
-  }
-  
-if (
-    (event.ctrlKey === true || event.metaKey === true) &&
-    (event.key === "a" ||
-      event.key === "c" ||
-      event.key === "v" ||
-      event.key === "x")
-  ) {
-    return;
-  }
 
-  if (event.key < "0" || event.key > "9") {
-    event.preventDefault();
-  }
-}
+let exchangeRates = {};
 
 
-function handlePaste(event) {
-  const pastedData = (
-    event.clipboardData || window.clipboardData
-  ).getData("text");
-  if (!/^\d*\.?\d*$/.test(pastedData)) {
-    event.preventDefault();
-  }
-}
+async function fetchExchangeRates(baseCurrency) {
+  try {
+    const response = await fetch(`${API_URL}${baseCurrency}`);
+    const data = await response.json();
 
-
-amount1.addEventListener("keypress", validateNumberInput);
-amount2.addEventListener("keypress", validateNumberInput);
-amount1.addEventListener("paste", handlePaste);
-amount2.addEventListener("paste", handlePaste);
-
-function handleInput(event) {
-  const value = event.target.value;
-
-
-  let sanitizedValue = value.replace(/,/g, ".");
-
-  const parts = sanitizedValue.split(".");
-  if (parts.length > 2) {
-    sanitizedValue = parts[0] + "." + parts.slice(1).join("");
-  }
-
-
-  if (sanitizedValue !== value) {
-    event.target.value = sanitizedValue;
-  }
-
-
-  if (event.target === amount1) {
-    convertCurrency();
-  } else {
-    convertCurrencyReverse();
-  }
-}
-
-amount1.addEventListener("input", handleInput);
-amount2.addEventListener("input", handleInput);
-
-
-document.querySelectorAll(".currency-tab").forEach((tab) => {
-  tab.addEventListener("click", (e) => {
-    const group = e.target.closest(".currency-group");
-    group
-      .querySelectorAll(".currency-tab")
-      .forEach((t) => t.classList.remove("active"));
-    e.target.classList.add("active");
-
-    if (group === amount1.closest(".currency-group")) {
-      currency1 = e.target.dataset.currency;
+    if (data.result === "success") {
+      exchangeRates = data.rates;
+      updateRates();
+      calculateFromLeft(); 
+      calculateFromRight(); 
     } else {
-      currency2 = e.target.dataset.currency;
+      console.error("API-dən məlumat alınmadı:", data.error);
     }
-    convertCurrency();
+  } catch (error) {
+    console.error("Xəta:", error);
+    offlineMessage.style.display = "block";
+  }
+}
+
+
+function updateRates() {
+  if (exchangeRates[currency2] && exchangeRates[currency1]) {
+  const rate1Value = (exchangeRates[currency2] / exchangeRates[currency1]).toFixed(4);
+  const rate2Value = (1 / rate1Value).toFixed(4);
+
+  rate1.textContent = `1 ${currency1} = ${rate1Value} ${currency2}`;
+  rate2.textContent = `1 ${currency2} = ${rate2Value} ${currency1}`;
+}else {
+  console.error("Valyutalar tapılmadı:", currency1, currency2);
+}
+}
+
+
+
+function calculateFromLeft() {
+  if (!isOnline) {
+    console.warn("İnternet bağlantısı yoxdur, çevrilmə mümkün deyil.");
+    if (currency1 === currency2) {
+      amountInput2.value = amountInput1.value; 
+    }
+    return;
+  }
+  const inputValue = parseFloat(amountInput1.value);
+  if (!isNaN(inputValue)) {
+    const rate1Value = exchangeRates[currency2] / exchangeRates[currency1];
+    amountInput2.value = (inputValue * rate1Value).toFixed(4);
+  } else {
+    amountInput2.value = "";
+  }
+}
+
+
+function calculateFromRight() {
+  if (!isOnline) {
+    console.warn("İnternet bağlantısı yoxdur, çevrilmə mümkün deyil.");
+    if (currency1 === currency2) {
+      amountInput1.value = amountInput2.value; 
+    }
+    return;
+  }
+  const inputValue = parseFloat(amountInput2.value);
+  if (!isNaN(inputValue)) {
+    const rate2Value = exchangeRates[currency1] / exchangeRates[currency2];
+    amountInput1.value = (inputValue * rate2Value).toFixed(4);
+  } else {
+    amountInput1.value = "";
+  }
+}
+
+
+function setActiveTab(tabs, activeCurrency) {
+  tabs.forEach((tab) => {
+    if (tab.dataset.currency === activeCurrency) {
+      tab.classList.add("active");
+    } else {
+      tab.classList.remove("active");
+    }
+  });
+}
+
+currencyTabs1.forEach((tab) => {
+  tab.addEventListener("click", () => {
+    currency1 = tab.dataset.currency;
+    setActiveTab(currencyTabs1, currency1);
+    fetchExchangeRates(currency1); 
   });
 });
 
-const API_KEY = "cf72c74c0334b5edfe94a1a83e1a8626";
+currencyTabs2.forEach((tab) => {
+  tab.addEventListener("click", () => {
+    currency2 = tab.dataset.currency;
+    setActiveTab(currencyTabs2, currency2);
+    updateRates(); 
+    calculateFromLeft(); 
+    calculateFromRight(); 
+  });
+});
 
-async function convertCurrency() {
-  const value1 = parseFloat(amount1.value) || 0;
 
-  if (currency1 === currency2) {
-    amount2.value = amount1.value;
-    rate1.textContent = `1 ${currency1} = 1 ${currency2}`;
-    rate2.textContent = `1 ${currency2} = 1 ${currency1}`;
-    return;
-  }
+amountInput1.addEventListener("input", calculateFromLeft);
+amountInput2.addEventListener("input", calculateFromRight);
+fetchExchangeRates(currency1);
 
-  try {
-    errorMessage.style.display = "none";
-    const response = await fetch(
-      `https://api.exchangerate.host/convert?access_key=${API_KEY}&from=${currency1}&to=${currency2}&amount=${value1}`
-    );
 
-    if (!response.ok) throw new Error("Network response was not ok");
+let isOnline = navigator.onLine;
 
-    const data = await response.json();
-    if (!data.success) throw new Error(data.error.info);
-
-    const rate = data.result / value1;
-
-    amount2.value = data.result.toFixed(4);
-    rate1.textContent = `1 ${currency1} = ${rate.toFixed(4)} ${currency2}`;
-    rate2.textContent = `1 ${currency2} = ${(1 / rate).toFixed(4)} ${currency1}`;
-  } catch (error) {
-    errorMessage.style.display = "block";
-    rate1.textContent = "";
-    rate2.textContent = "";
-  }
-}
-
-async function convertCurrencyReverse() {
-  const value2 = parseFloat(amount2.value) || 0;
-
-  if (currency1 === currency2) {
-    amount1.value = amount2.value;
-    rate1.textContent = `1 ${currency1} = 1 ${currency2}`;
-    rate2.textContent = `1 ${currency2} = 1 ${currency1}`;
-    return;
-  }
-
-  try {
-    errorMessage.style.display = "none";
-    const response = await fetch(
-      `https://api.exchangerate.host/convert?access_key=${API_KEY}&from=${currency2}&to=${currency1}&amount=${value2}`
-    );
-
-    if (!response.ok) throw new Error("Network response was not ok");
-
-    const data = await response.json();
-    if (!data.success) throw new Error(data.error.info);
-
-    const rate = data.result / value2;
-
-    amount1.value = data.result.toFixed(4);
-    rate2.textContent = `1 ${currency2} = ${rate.toFixed(4)} ${currency1}`;
-    rate1.textContent = `1 ${currency1} = ${(1 / rate).toFixed(4)} ${currency2}`;
-  } catch (error) {
-    errorMessage.style.display = "block";
-    rate1.textContent = "";
-    rate2.textContent = "";
-  }
-}
-
-const offlineMessage = document.getElementById("offline-message");
-const tabs = document.querySelectorAll(".currency-tab");
-let isOffline = !navigator.onLine; 
 
 
 function updateNetworkStatus() {
-    isOffline = !navigator.onLine;
-
-    if (isOffline) {
-        offlineMessage.style.display = "block"; 
-    } else {
-        offlineMessage.style.display = "none"; 
-        convertCurrency(); 
-    }
+  isOnline = navigator.onLine;
+  if (isOnline) {
+    hideOfflineMessage();
+    fetchExchangeRates(currency1); 
+  } else {
+    showOfflineMessage();
+    amountInput1.value = ""; 
+    amountInput2.value = ""; 
+  }
 }
 
-tabs.forEach((tab) => {
-    tab.addEventListener("click", (e) => {
-        if (isOffline) {
-            e.preventDefault(); 
-        } else {
-            console.log("Tab dəyişdirildi, API çağırışı göndərilir.");
-        }
-    });
-});
+function showOfflineMessage() {
 
+  offlineMessage.style.display = "block";
+}
+
+function hideOfflineMessage() {
+
+  offlineMessage.style.display = "none"; 
+}
+window.addEventListener("online", updateNetworkStatus); 
+window.addEventListener("offline", updateNetworkStatus); 
 updateNetworkStatus();
-
-
-window.addEventListener("offline", updateNetworkStatus);
-window.addEventListener("online", updateNetworkStatus);
-
-async function convertCurrency() {
-    const amount1Value = parseFloat(document.getElementById("amount1").value) || 0;
-    const amount2Input = document.getElementById("amount2");
-
-   
-    if (currency1 === currency2) {
-        amount2Input.value = amount1Value; 
-        console.log("Valyutalar eynidir, heç bir çevrilmə aparılmadı.");
-        document.getElementById("rate1").textContent = `1 ${currency1} = 1 ${currency2}`;
-        document.getElementById("rate2").textContent = `1 ${currency2} = 1 ${currency1}`;
-        return;
-    }
-
-    if (isOffline) return; 
-
-    try {
-        const response = await fetch(
-            `https://api.exchangerate.host/convert?from=${currency1}&to=${currency2}&amount=${amount1Value}`
-        );
-        const data = await response.json();
-        console.log("API-dən alınan cavab:", data);
-
-        if (data && data.result) {
-            amount2Input.value = data.result;
-            const rate = data.result / amount1Value;
-            document.getElementById("rate1").textContent = `1 ${currency1} = ${rate.toFixed(4)} ${currency2}`;
-            document.getElementById("rate2").textContent = `1 ${currency2} = ${(1 / rate).toFixed(4)} ${currency1}`;
-        }
-    } catch (error) {
-        console.error("Valyuta yenilənməsində xəta:", error);
-    }
-}
