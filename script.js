@@ -1,152 +1,79 @@
-const API_URL = "https://open.er-api.com/v6/latest/";
-const API_KEY = "84fbec1168aca3156cc48dc7b38b4907"; 
-
-
-const currencyTabs1 = document.querySelectorAll(".currency-group:first-child .currency-tab");
-const currencyTabs2 = document.querySelectorAll(".currency-group:last-child .currency-tab");
-const amountInput1 = document.getElementById("amount1");
-const amountInput2 = document.getElementById("amount2");
-const rate1 = document.getElementById("rate1");
-const rate2 = document.getElementById("rate2");
-const offlineMessage = document.getElementById("offline-message");
-
-
-let currency1 = "RUB";
-let currency2 = "USD";
-
-
-let exchangeRates = {};
-
-
-async function fetchExchangeRates(baseCurrency) {
-  try {
-    const response = await fetch(`${API_URL}${baseCurrency}`);
-    const data = await response.json();
-
-    if (data.result === "success") {
-      exchangeRates = data.rates;
-      updateRates();
-      calculateFromLeft(); 
-      calculateFromRight(); 
-    } else {
-      console.error("API-dən məlumat alınmadı:", data.error);
+const leftbutton = document.querySelectorAll('.left  li');
+const rightbutton = document.querySelectorAll('.right  li');
+const leftinput = document.querySelector('.left input');
+const rightinput = document.querySelector('.right input');
+const buttons = document.querySelectorAll('li')
+const leftp = document.querySelector('.left>.value p')
+const rightp = document.querySelector('.right>.value p')
+let query = 'RUB';
+let query2 = 'USD';
+console.log(window.navigator.onLine)
+const calc = function (n) {
+    const leftactiveli = document.querySelector('.left  .activeli')
+    const rightactiveli = document.querySelector('.right  .activeli')
+    if(leftactiveli.textContent!==rightactiveli.textContent){
+    fetch('https://v6.exchangerate-api.com/v6/b6f2c54d6929bc5cb0d0b059/latest/USD')
+        .then(r => r.json()).then(data => {
+           let num = data.conversion_rates[leftactiveli.textContent]
+           let num1 = data.conversion_rates[rightactiveli.textContent]
+            rightinput.value = Math.round(((n * num1) / num)
+                * 1000) / 1000;
+            leftp.textContent = `1${leftactiveli.textContent} = ${Math.round(((1 * num1) / num)
+                * 1000) / 1000} ${rightactiveli.textContent} `;
+            rightp.textContent = `1${rightactiveli.textContent} = ${Math.round(((1 * num) / num1)
+                * 1000) / 1000} ${leftactiveli.textContent} `;
+        })
+    }else{
+        rightinput.value =n;
+        leftp.textContent=`1${leftactiveli.textContent} =1${leftactiveli.textContent}`
+        rightp.textContent=`1${leftactiveli.textContent} =1${leftactiveli.textContent}`
     }
-  } catch (error) {
-    console.error("Xəta:", error);
-    offlineMessage.style.display = "block";
-  }
 }
-
-
-function updateRates() {
-  if (exchangeRates[currency2] && exchangeRates[currency1]) {
-  const rate1Value = (exchangeRates[currency2] / exchangeRates[currency1]).toFixed(4);
-  const rate2Value = (1 / rate1Value).toFixed(4);
-
-  rate1.textContent = `1 ${currency1} = ${rate1Value} ${currency2}`;
-  rate2.textContent = `1 ${currency2} = ${rate2Value} ${currency1}`;
-}else {
-  console.error("Valyutalar tapılmadı:", currency1, currency2);
-}
-}
-
-
-
-function calculateFromLeft() {
-  if (!isOnline) {
-    console.warn("İnternet bağlantısı yoxdur, çevrilmə mümkün deyil.");
-    if (currency1 === currency2) {
-      amountInput2.value = amountInput1.value; 
-    }
-    return;
-  }
-  const inputValue = parseFloat(amountInput1.value);
-  if (!isNaN(inputValue)) {
-    const rate1Value = exchangeRates[currency2] / exchangeRates[currency1];
-    amountInput2.value = (inputValue * rate1Value).toFixed(4);
-  } else {
-    amountInput2.value = "";
-  }
-}
-
-
-function calculateFromRight() {
-  if (!isOnline) {
-    console.warn("İnternet bağlantısı yoxdur, çevrilmə mümkün deyil.");
-    if (currency1 === currency2) {
-      amountInput1.value = amountInput2.value; 
-    }
-    return;
-  }
-  const inputValue = parseFloat(amountInput2.value);
-  if (!isNaN(inputValue)) {
-    const rate2Value = exchangeRates[currency1] / exchangeRates[currency2];
-    amountInput1.value = (inputValue * rate2Value).toFixed(4);
-  } else {
-    amountInput1.value = "";
-  }
-}
-
-
-function setActiveTab(tabs, activeCurrency) {
-  tabs.forEach((tab) => {
-    if (tab.dataset.currency === activeCurrency) {
-      tab.classList.add("active");
-    } else {
-      tab.classList.remove("active");
-    }
-  });
-}
-
-currencyTabs1.forEach((tab) => {
-  tab.addEventListener("click", () => {
-    currency1 = tab.dataset.currency;
-    setActiveTab(currencyTabs1, currency1);
-    fetchExchangeRates(currency1); 
-  });
-});
-
-currencyTabs2.forEach((tab) => {
-  tab.addEventListener("click", () => {
-    currency2 = tab.dataset.currency;
-    setActiveTab(currencyTabs2, currency2);
-    updateRates(); 
-    calculateFromLeft(); 
-    calculateFromRight(); 
-  });
+leftbutton.forEach(item => {
+    item.addEventListener('click', function active() {
+        if(window.navigator.onLine){
+            let activeli = document.querySelector('.left  .activeli')
+            activeli.classList.remove('activeli')
+            item.classList.add('activeli')
+            if (query !== document.querySelector('.left  .activeli').textContent ) {
+                query = document.querySelector('.left  .activeli').textContent
+                calc(+(leftinput.value));
+            }
+            }else{
+                const of= document.querySelector('.ofline img')
+document.querySelector('main').style.display='none'
+document.querySelector('header').style.display='none'
+of.style.display ="block"
+            }
+    })
 });
 
 
-amountInput1.addEventListener("input", calculateFromLeft);
-amountInput2.addEventListener("input", calculateFromRight);
-fetchExchangeRates(currency1);
-
-
-let isOnline = navigator.onLine;
-
-
-
-function updateNetworkStatus() {
-  isOnline = navigator.onLine;
-  if (isOnline) {
-    hideOfflineMessage();
-    fetchExchangeRates(currency1); 
-  } else {
-    showOfflineMessage();
-    amountInput1.value = ""; 
-    amountInput2.value = ""; 
-  }
-}
-
-function showOfflineMessage() {
-
-  offlineMessage.style.display = "block";
-}
-
-function hideOfflineMessage() {
-
-  offlineMessage.style.display = "none"; 
-}
-window.addEventListener("online", updateNetworkStatus); 
-window.addEventListener("offline", updateNetworkStatus); 
-updateNetworkStatus();
+rightbutton.forEach(item => {
+    item.addEventListener('click', function active() {
+        if(window.navigator.onLine){
+            const activeli = document.querySelector('.right .activeli')
+            activeli.classList.remove('activeli')
+            item.classList.add('activeli')
+            if (query2 !== document.querySelector('.right .activeli').textContent ) {
+                query2 = document.querySelector('.right .activeli').textContent
+                calc(+(leftinput.value));
+            }
+            }else{
+                const of= document.querySelector('.ofline img')
+document.querySelector('main').style.display='none'
+document.querySelector('header').style.display='none'
+of.style.display ="block"
+            }
+    })
+});
+leftinput.addEventListener('input', () => {
+    if(window.navigator.onLine){
+    calc(+(leftinput.value));
+    }else{
+const of= document.querySelector('.ofline img')
+document.querySelector('main').style.display='none'
+document.querySelector('header').style.display='none'
+of.style.display ="block"
+    }
+})
