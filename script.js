@@ -16,15 +16,14 @@ const calc = function (n) {
         .then(r => r.json()).then(data => {
            let num = data.conversion_rates[leftactiveli.textContent]
            let num1 = data.conversion_rates[rightactiveli.textContent]
-            rightinput.value = Math.round(((n * num1) / num)
-                * 1000) / 1000;
-            leftp.textContent = `1${leftactiveli.textContent} = ${Math.round(((1 * num1) / num)
-                * 1000) / 1000} ${rightactiveli.textContent} `;
-            rightp.textContent = `1${rightactiveli.textContent} = ${Math.round(((1 * num) / num1)
-                * 1000) / 1000} ${leftactiveli.textContent} `;
+            rightinput.value = ((n * num1) / num).toFixed(4);
+            leftp.textContent = `1${leftactiveli.textContent} = ${((1 * num1) / num).toFixed(4)} 
+             ${rightactiveli.textContent} `;
+            rightp.textContent = `1${rightactiveli.textContent} = ${((1 * num) / num1).toFixed(4)} 
+             ${leftactiveli.textContent} `;
         })
     }else{
-        rightinput.value =n;
+        rightinput.value =n.toFixed(4);
         leftp.textContent=`1${leftactiveli.textContent} =1${leftactiveli.textContent}`
         rightp.textContent=`1${leftactiveli.textContent} =1${leftactiveli.textContent}`
     }
